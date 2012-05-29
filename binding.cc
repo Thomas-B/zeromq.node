@@ -704,7 +704,7 @@ namespace zmq {
 
     GET_SOCKET(args);
 
-#if 0  // zero-copy version, but doesn't properly pin buffer and so has GC issues
+#if 1  // zero-copy version, but doesn't properly pin buffer and so has GC issues
     OutgoingMessage msg(args[0]->ToObject());
     if (zmq_send(socket->socket_, msg, flags) < 0)
         return ThrowException(ExceptionFromError());
