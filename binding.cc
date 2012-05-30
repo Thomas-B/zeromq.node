@@ -22,6 +22,8 @@
  * THE SOFTWARE.
  */
 
+
+#include <iostream>
 #include <v8.h>
 #include <node.h>
 #include <node_version.h>
@@ -631,6 +633,7 @@ namespace zmq {
       };
 
       inline ~OutgoingMessage() {
+	std::cout << "OGM close" << std::endl;
         if (zmq_msg_close(&msg_) < 0)
           throw std::runtime_error(ErrorMessage());
       };
@@ -650,6 +653,7 @@ namespace zmq {
           }
 
           inline ~BufferReference() {
+	    std::cout << "BufRef close" << std::endl;
             buf_.Dispose();
             buf_.Clear();
           }
@@ -664,6 +668,7 @@ namespace zmq {
           // Called when V8 would like to GC buf_
           static void WeakCheck(v8::Persistent<v8::Value> obj, void* data) {
             if (((BufferReference*)data)->noLongerNeeded_) {
+	      std::cout << "WANT TO BE FREE BY V8" << std::endl;
               delete (BufferReference*)data;
             } else {
               // Still in use, revive, prevent GC
@@ -713,17 +718,19 @@ namespace zmq {
     zmq_msg_t msg;
     Local<Object> buf = args[0]->ToObject();
     size_t len = Buffer::Length(buf);
+    //    zmq_msg_init(&msg);
     int res = zmq_msg_init_size(&msg, len);
     if (res != 0)
       return ThrowException(ExceptionFromError());
 
     char * cp = (char *)zmq_msg_data(&msg);
     const char * dat = Buffer::Data(buf);
-    std::copy(dat, dat + len, cp);
-
+    memcpy(cp, dat, len);
     if (zmq_send(socket->socket_, &msg, flags) < 0)
       return ThrowException(ExceptionFromError());
 #endif // zero copy / copying version
+
+    //zmq_msg_close(&msg);
 
     return Undefined();
   }
